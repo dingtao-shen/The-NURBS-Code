@@ -7,8 +7,6 @@
 #define MINURBS_BASIS
 
 #include "../Eigen/Dense"
-#include "util.hpp"
-#include <vector>
 #include <assert.h>
 #include <cmath>
 
