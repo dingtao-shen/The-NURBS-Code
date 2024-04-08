@@ -8,7 +8,7 @@ This Project is still under development.
   - Create 2D NURBS curves with input degree, knot vector, control points and associated weights;
   - Evaluate the points/derivatives on the curve at any parameter.
   - ...
-- This  mainly refers to the algorithm in the book and refers to [tinyburns](https://github.com/pradeep-pyro/tinynurbs).
+- This  mainly refers to the algorithm in the book, as well as [tinyburns](https://github.com/pradeep-pyro/tinynurbs).
 - This tool kits are developed utilizing the [Eigen](https://libeigen.gitlab.io/docs/) library.
 
 
