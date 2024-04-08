@@ -9,7 +9,7 @@ This Project is still under development.
   - Evaluate the points/derivatives on the curve at any parameter.
   - ...
 - This  mainly refers to the algorithm in the book and refers to [tinyburns](https://github.com/pradeep-pyro/tinynurbs).
-- This tool kits are developed utilizing the [Eigen] library.
+- This tool kits are developed utilizing the [Eigen](https://libeigen.gitlab.io/docs/) library.
 
 
 ## Example
