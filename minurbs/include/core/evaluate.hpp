@@ -13,6 +13,25 @@ using namespace std;
 #include "basis.hpp"
 #include "curve.hpp"
 
+/**
+ * Compute the binomial coefficient (nCk) using the formula
+ * \product_{i=0}^k (n + 1 - i) / i
+ */
+inline int binomial(unsigned int n, unsigned int k)
+{
+    unsigned int result = 1;
+    if (k > n)
+    {
+        return 0;
+    }
+    for (unsigned int i = 1; i <= k; ++i)
+    {
+        result *= (n + 1 - i);
+        result /= i;
+    }
+    return result;
+}
+
 namespace minurbs{
 
     namespace internal{
@@ -42,6 +61,38 @@ namespace minurbs{
                 }
             }
             return point;
+        }
+
+        /**
+         * Evaluate derivatives of a non-rational NURBS curve
+         * @param[in] degree Degree of the curve
+         * @param[in] knots Knot vector of the curve.
+         * @param[in] control_points Control points of the curve.
+         * @param[in] num_ders Number of times to derivate.
+         * @param[in] u Parameter to evaluate the derivatives at.
+         * @return curve_ders Derivatives of the curve at u.
+         * E.g. curve_ders[n] is the nth derivative at u, where 0 <= n <= num_ders.
+         */
+        Eigen::MatrixXd curveDerivatives(int degree, Eigen::VectorXd knots, Eigen::MatrixXd control_points, double u, int num_ders)
+        {
+            Eigen::MatrixXd curve_ders = Eigen::MatrixXd::Zero(num_ders + 1, control_points.cols()); // Higher order derivatives are assigned to zero
+
+            // Find the span and corresponding non-zero basis functions & derivatives
+            int span = findSpan(degree, knots, u);
+            Eigen::MatrixXd ders = bsplineDerBasis(degree, span, knots, u, num_ders);
+
+            // Compute first num_ders derivatives
+            int du = num_ders < degree ? num_ders : degree;
+            for (int k = 0; k <= du; k++)
+            {
+                for (int j = 0; j <= degree; j++)
+                {
+                    for(int l = 0; l < curve_ders.cols(); l++){
+                        curve_ders(k, l) += ders(k, j) * control_points(span - degree + j, l);
+                    }
+                }
+            }
+            return curve_ders;
         }
 
     } //namespace internal
@@ -83,6 +134,92 @@ namespace minurbs{
 
         return point;
     }
+
+    /**
+     * Evaluate derivatives of a non-rational NURBS curve
+     * @param[in] crv Curve object
+     * @param[in] num_ders Number of times to derivate.
+     * @param[in] u Parameter to evaluate the derivatives at.
+     * @return curve_ders Derivatives of the curve at u.
+     * E.g. curve_ders[n] is the nth derivative at u, where 0 <= n <= num_ders.
+     */
+    Eigen::MatrixXd curveDerivatives(Curve crv, int num_ders, double u)
+    {
+        return internal::curveDerivatives(crv.degree, crv.knots, crv.control_points, u, num_ders);
+    }
+
+    /**
+     * Evaluate derivatives of a rational NURBS curve
+     * @param[in] u Parameter to evaluate the derivatives at.
+     * @param[in] knots Knot vector of the curve.
+     * @param[in] control_points Control points of the curve.
+     * @param[in] weights Weights corresponding to each control point.
+     * @param[in] num_ders Number of times to differentiate.
+     * @param[inout] curve_ders Derivatives of the curve at u.
+     * E.g. curve_ders[n] is the nth derivative at u, where n is between 0 and
+     * num_ders-1.
+     */
+    Eigen::MatrixXd curveDerivatives(RationalCurve crv, int num_ders, double u)
+    {
+        // Convert cartesian coordinates to homogenous coordinates
+        Eigen::MatrixXd Cw = Eigen::MatrixXd::Zero(crv.control_points.rows(), 3);
+        for(int i = 0; i < crv.control_points.rows(); i++){
+            Cw(i,0) = crv.control_points(i,0) * crv.weights(i);
+            Cw(i,1) = crv.control_points(i,1) * crv.weights(i);
+            Cw(i,2) = crv.weights(i);
+        }
+        Eigen::MatrixXd curve_ders = Eigen::MatrixXd::Zero(num_ders + 1, Cw.cols()-1);
+        // Derivatives of Cw
+        Eigen::MatrixXd Cwders = internal::curveDerivatives(crv.degree, crv.knots, Cw, u, num_ders);
+
+        // Split Cwders into coordinates and weights
+        Eigen::MatrixXd Aders = Cwders.block(0, 0, Cwders.rows(), Cwders.cols()-1);
+        Eigen::VectorXd wders = Cwders.block(0, Cwders.cols()-1, Cwders.rows(), 1);
+
+        // Compute rational derivatives
+        for (int k = 0; k <= num_ders; k++)
+        {
+            Eigen::VectorXd v = Aders.row(k);
+            for (int i = 1; i <= k; i++)
+            {
+                v -= binomial(k, i) * wders(i) * curve_ders.row(k - i);
+            }
+            curve_ders.row(k) = v.array() /= wders(0);
+        }
+        return curve_ders;
+    }
+
+    /**
+     * Evaluate the tangent of a B-spline curve
+     * @param[in] crv Curve object
+     * @return Unit tangent of the curve at u.
+     */
+    Eigen::VectorXd curveTangent(Curve crv, double u)
+    {
+        Eigen::MatrixXd ders = curveDerivatives(crv, 1, u);
+        Eigen::VectorXd du = ders.row(1);
+        double du_len = sqrt(pow(du(0), 2) + pow(du(1), 2));
+        if(du_len != 0){
+            du.array() /= du_len;        
+        }
+        return du;
+    }
+    /**
+     * Evaluate the tangent of a rational B-spline curve
+     * @param[in] crv RationalCurve object
+     * @return Unit tangent of the curve at u.
+     */
+    Eigen::VectorXd curveTangent(RationalCurve crv, double u)
+    {
+        Eigen::MatrixXd ders = curveDerivatives(crv, 1, u);
+        Eigen::VectorXd du = ders.row(1);
+        double du_len = sqrt(pow(du(0), 2) + pow(du(1), 2));
+        if(du_len != 0){
+            du.array() /= du_len;        
+        }
+        return du;
+    }
+
 
 } // namespace minurbs
 
