@@ -44,7 +44,7 @@ namespace minurbs{
         * @param[in] u Parameter to evaluate the curve at.
         * @return point Resulting point on the curve at parameter u.
         */
-        Eigen::VectorXd curvePoint(int deg, Eigen::VectorXd knots, Eigen::MatrixXd control_points, double u)
+        template <typename T=double> Eigen::VectorXd curvePoint(unsigned int deg, Eigen::VectorXd knots, Eigen::MatrixXd control_points, double u)
         {
             // Initialize result to 0s
             Eigen::VectorXd point = Eigen::VectorXd::Zero(control_points.cols());
@@ -73,7 +73,7 @@ namespace minurbs{
          * @return curve_ders Derivatives of the curve at u.
          * E.g. curve_ders[n] is the nth derivative at u, where 0 <= n <= num_ders.
          */
-        Eigen::MatrixXd curveDerivatives(int degree, Eigen::VectorXd knots, Eigen::MatrixXd control_points, double u, int num_ders)
+        template <typename T=double> Eigen::MatrixXd curveDerivatives(unsigned int degree, Eigen::VectorXd knots, Eigen::MatrixXd control_points, double u, int num_ders)
         {
             Eigen::MatrixXd curve_ders = Eigen::MatrixXd::Zero(num_ders + 1, control_points.cols()); // Higher order derivatives are assigned to zero
 
@@ -103,7 +103,7 @@ namespace minurbs{
     @param[in] u Parameter to evaluate the curve at.
     @return point Resulting point on the curve at parameter u.
     */
-    Eigen::VectorXd curvePoint(Curve crv, double u)
+    template <typename T=double> Eigen::VectorXd curvePoint(const Curve<T> &crv, double u)
     {
         return internal::curvePoint(crv.degree, crv.knots, crv.control_points, u);
     }
@@ -114,7 +114,7 @@ namespace minurbs{
      * @param[in] u Parameter to evaluate the curve at.
      * @return point Resulting point on the curve.
      */
-    Eigen::VectorXd curvePoint(RationalCurve crv, double u)
+    template <typename T=double> Eigen::VectorXd curvePoint(const RationalCurve<T> &crv, double u)
     {
         // Convert cartesian coordinates to homogenous coordinates
         Eigen::MatrixXd Cw = Eigen::MatrixXd::Zero(crv.control_points.rows(), 3);
@@ -143,7 +143,7 @@ namespace minurbs{
      * @return curve_ders Derivatives of the curve at u.
      * E.g. curve_ders[n] is the nth derivative at u, where 0 <= n <= num_ders.
      */
-    Eigen::MatrixXd curveDerivatives(Curve crv, int num_ders, double u)
+    template <typename T=double> Eigen::MatrixXd curveDerivatives(const Curve<T> &crv, int num_ders, double u)
     {
         return internal::curveDerivatives(crv.degree, crv.knots, crv.control_points, u, num_ders);
     }
@@ -159,7 +159,7 @@ namespace minurbs{
      * E.g. curve_ders[n] is the nth derivative at u, where n is between 0 and
      * num_ders-1.
      */
-    Eigen::MatrixXd curveDerivatives(RationalCurve crv, int num_ders, double u)
+    template <typename T=double> Eigen::MatrixXd curveDerivatives(const RationalCurve<T> &crv, int num_ders, double u)
     {
         // Convert cartesian coordinates to homogenous coordinates
         Eigen::MatrixXd Cw = Eigen::MatrixXd::Zero(crv.control_points.rows(), 3);
@@ -194,7 +194,7 @@ namespace minurbs{
      * @param[in] crv Curve object
      * @return Unit tangent of the curve at u.
      */
-    Eigen::VectorXd curveTangent(Curve crv, double u)
+    template <typename T=double> Eigen::VectorXd curveTangent(const Curve<T> &crv, double u)
     {
         Eigen::MatrixXd ders = curveDerivatives(crv, 1, u);
         Eigen::VectorXd du = ders.row(1);
@@ -209,7 +209,7 @@ namespace minurbs{
      * @param[in] crv RationalCurve object
      * @return Unit tangent of the curve at u.
      */
-    Eigen::VectorXd curveTangent(RationalCurve crv, double u)
+    template <typename T=double> Eigen::VectorXd curveTangent(const RationalCurve<T> &crv, double u)
     {
         Eigen::MatrixXd ders = curveDerivatives(crv, 1, u);
         Eigen::VectorXd du = ders.row(1);

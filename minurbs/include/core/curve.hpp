@@ -9,26 +9,29 @@
 
 #include "../Eigen/Dense"
 #include <assert.h>
+#include <exception>
+#include <stdexcept>
 #include <cmath>
 
 namespace minurbs{
 
     // Forward declaration
-    struct RationalCurve;
+    template <typename T> struct RationalCurve;
 
     /**
     Struct for holding a polynomial B-spline curve
     @tparam T Data type of control points and knots (float or double)
     */
-    struct Curve
+    template <typename T=double> struct Curve
     {
-        int degree;
+        unsigned int degree;
         Eigen::VectorXd knots;
         Eigen::MatrixXd control_points; // Np rows by 2 col
 
         Curve() = default;
+        Curve(const RationalCurve<T> &crv) : Curve(crv.degree, crv.knots, crv.control_points) {}
         // Curve(RationalCurve crv) : Curve(crv.degree, crv.knots, crv.control_points) {}
-        Curve(int degree, Eigen::VectorXd knots, Eigen::MatrixXd control_points)
+        Curve(unsigned int degree, Eigen::VectorXd knots, Eigen::MatrixXd control_points)
             : degree(degree), knots(knots), control_points(control_points)
         {
         }
@@ -38,22 +41,22 @@ namespace minurbs{
     Struct for holding a rational B-spline curve
     @tparam T Data type of control points and knots (float or double)
     */
-    struct RationalCurve
+    template <typename T=double> struct RationalCurve
     {
-        int degree;
+        unsigned int degree;
         Eigen::VectorXd knots;
         Eigen::MatrixXd control_points;
         Eigen::VectorXd weights;
 
         RationalCurve() = default;
-        RationalCurve(Curve crv): RationalCurve(crv, Eigen::VectorXd::Ones(crv.control_points.size()))
+        RationalCurve(const Curve<T> &crv): RationalCurve(crv, Eigen::VectorXd::Ones(crv.control_points.size()))
         {
         }
-        RationalCurve(Curve crv, Eigen::VectorXd weights)
+        RationalCurve(const Curve<T> &crv, Eigen::VectorXd weights)
             : RationalCurve(crv.degree, crv.knots, crv.control_points, weights)
         {
         }
-        RationalCurve(int degree, Eigen::VectorXd knots, Eigen::MatrixXd control_points, Eigen::VectorXd weights)
+        RationalCurve(unsigned int degree, Eigen::VectorXd knots, Eigen::MatrixXd control_points, Eigen::VectorXd weights)
             : degree(degree), knots(knots), control_points(control_points), weights(weights)
         {
         }

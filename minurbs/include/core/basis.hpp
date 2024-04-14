@@ -20,7 +20,7 @@ namespace minurbs
  * @param[in] u Parameter value.
  * @return Span index into the knot vector such that (span - 1) < u <= span
 */
-int findSpan(int deg, Eigen::VectorXd knots, double u)
+template <typename T=double> int findSpan(unsigned int deg, Eigen::VectorXd knots, double u)
 {
     // index of last control point
     int n = static_cast<int>(knots.size()) - deg - 2;
@@ -63,7 +63,7 @@ int findSpan(int deg, Eigen::VectorXd knots, double u)
  * @param[in] u Parameter to evaluate the basis functions at.
  * @return N Values of (deg+1) non-zero basis functions.
  */
-Eigen::VectorXd bsplineBasis(unsigned int deg, int span, Eigen::VectorXd knots, double u)
+template <typename T=double> Eigen::VectorXd bsplineBasis(unsigned int deg, int span, Eigen::VectorXd knots, double u)
 {
     Eigen::VectorXd N = Eigen::VectorXd::Zero(deg + 1);
     Eigen::VectorXd left = Eigen::VectorXd::Zero(deg + 1);
@@ -97,7 +97,7 @@ Eigen::VectorXd bsplineBasis(unsigned int deg, int span, Eigen::VectorXd knots, 
  * @param[in] num_ders Number of derivatives to compute (num_ders <= deg)
  * @return ders Values of non-zero derivatives of basis functions.
  */
-Eigen::MatrixXd bsplineDerBasis(int deg, int span, Eigen::VectorXd knots, double u, int num_ders)
+template <typename T=double> Eigen::MatrixXd bsplineDerBasis(unsigned int deg, int span, Eigen::VectorXd knots, double u, int num_ders)
 {
     Eigen::VectorXd left = Eigen::VectorXd::Zero(deg + 1);
     Eigen::VectorXd right = Eigen::VectorXd::Zero(deg + 1);
